@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Musuko Puntos V4 — Panel Cajero</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode" defer></script>
+<style>
+:root{
+  --naranja:#e78333;
+  --naranja-dark:#bf6000;
+  --bg:#0d0d0d;
+  --panel:rgba(255,255,255,.05);
+  --panel-2:rgba(255,255,255,.03);
+  --line:rgba(255,255,255,.08);
+  --line-accent:rgba(231,131,51,.22);
+  --text-soft:rgba(255,255,255,.45);
+  --text-mid:rgba(255,255,255,.72);
+  --ok:#8ad19b;
+  --err:#ff8d8d;
+  --warn:#ffe0a1;
+  --shadow:0 20px 60px rgba(0,0,0,.36);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:#fff;font-family:'Outfit',sans-serif;min-height:100%}
+body{
+  background:
+    radial-gradient(ellipse at top left, rgba(231,131,51,.12), transparent 35%),
+    radial-gradient(ellipse at bottom right, rgba(231,131,51,.08), transparent 35%),
+    var(--bg);
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.fade-in{animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.app{min-height:100vh;position:relative}
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:16px 18px;background:rgba(13,13,13,.84);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line)
+}
+.topbar-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0}
+.topbar-logo{height:34px;width:auto;opacity:.95;display:block;margin:0 auto}
+.topbar-txt{text-align:center}
+.topbar-kicker{font-size:10px;letter-spacing:2.8px;text-transform:uppercase;color:var(--naranja);font-weight:700}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.05;font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.session-pill{
+  background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:8px 12px;
+  display:flex;gap:8px;align-items:center;min-height:38px
+}
+.session-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(138,209,155,.12)}
+.session-text{font-size:12px;color:var(--text-mid);white-space:nowrap}
+
+.btn-ghost,.btn-primary,.btn-soft,.btn-danger,.seg-btn,.chip-btn,.premio-btn{
+  border:none;outline:none;border-radius:14px;transition:.2s ease;position:relative
+}
+.btn-primary{
+  background:linear-gradient(180deg,var(--naranja),#d96f19);color:#fff;padding:15px 18px;font-weight:700;
+  box-shadow:0 14px 28px rgba(231,131,51,.18)
+}
+.btn-primary:hover:not(:disabled){background:linear-gradient(180deg,#ef913f,#db711a)}
+.btn-soft{background:rgba(231,131,51,.12);color:var(--naranja);padding:13px 16px;font-weight:700;border:1px solid rgba(231,131,51,.18)}
+.btn-soft:hover:not(:disabled){background:rgba(231,131,51,.16)}
+.btn-ghost{background:rgba(255,255,255,.04);color:#fff;padding:12px 16px;border:1px solid var(--line)}
+.btn-ghost:hover:not(:disabled){background:rgba(255,255,255,.07)}
+.btn-danger{background:rgba(255,141,141,.11);color:#ffb0b0;padding:12px 16px;border:1px solid rgba(255,141,141,.18)}
+.btn-danger:hover:not(:disabled){background:rgba(255,141,141,.16)}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+.main{padding:20px 18px 100px;max-width:1180px;margin:0 auto}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:1.08fr .92fr}
+.card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(231,131,51,.14);
+  border-radius:24px;padding:18px;box-shadow:var(--shadow)
+}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:500;line-height:1}
+.card-sub{font-size:13px;color:var(--text-soft);margin-top:7px;line-height:1.6}
+.section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--naranja);margin-bottom:10px}
+.row-wrap{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px}
+.mt-12{margin-top:12px}.mt-14{margin-top:14px}.mt-16{margin-top:16px}.mt-18{margin-top:18px}.mt-20{margin-top:20px}
+
+.field{display:flex;flex-direction:column;gap:7px;flex:1;min-width:0}
+.label{font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-soft)}
+.input{
+  width:100%;height:48px;padding:0 14px;border-radius:14px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);color:#fff;outline:none;transition:.2s ease
+}
+.input::placeholder{color:rgba(255,255,255,.26)}
+.input:focus{border-color:rgba(231,131,51,.45);box-shadow:0 0 0 4px rgba(231,131,51,.08)}
+.field-error{font-size:12px;color:var(--err);display:none}
+.field-error.visible{display:block}
+.helper{font-size:12px;color:var(--text-soft);line-height:1.55}
+
+.select-custom{position:relative}
+.select-btn{
+  width:100%;height:48px;padding:0 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left
+}
+.select-btn.open{border-color:rgba(231,131,51,.45);box-shadow:0 0 0 4px rgba(231,131,51,.08)}
+.select-value.placeholder{color:rgba(255,255,255,.28)}
+.select-chevron{color:var(--naranja);font-size:12px;transition:transform .2s ease}
+.select-btn.open .select-chevron{transform:rotate(180deg)}
+.select-menu{
+  position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:30;background:#131313;border:1px solid rgba(231,131,51,.18);
+  border-radius:16px;box-shadow:var(--shadow);padding:8px;display:none;max-height:260px;overflow:auto
+}
+.select-menu.open{display:block}
+.select-option{
+  width:100%;border:none;background:transparent;color:#fff;text-align:left;padding:12px 12px;border-radius:10px;font-size:14px
+}
+.select-option:hover,.select-option.active{background:rgba(231,131,51,.12);color:#fff}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{max-width:440px;width:100%;padding:28px}
+.login-card .top-logo{height:44px;width:auto;opacity:.95;margin:0 auto 12px;display:block}
+.error-banner,.ok-banner,.warn-banner,.info-banner{
+  border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.55;display:none
+}
+.error-banner.visible,.ok-banner.visible,.warn-banner.visible,.info-banner.visible{display:block}
+.error-banner{background:rgba(255,141,141,.09);border:1px solid rgba(255,141,141,.18);color:#ffc0c0}
+.ok-banner{background:rgba(138,209,155,.10);border:1px solid rgba(138,209,155,.18);color:#b8ecc2}
+.warn-banner{background:rgba(255,215,122,.08);border:1px solid rgba(255,215,122,.18);color:var(--warn)}
+.info-banner{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:var(--text-mid)}
+
+.loader-inline{display:none;align-items:center;justify-content:center;gap:10px}
+.loader-inline.active{display:flex}
+.spinner{width:17px;height:17px;border-radius:50%;border:2px solid rgba(255,255,255,.18);border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-state{font-size:12px;color:rgba(255,255,255,.78)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:14px 14px 13px}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.8px;color:var(--text-soft);margin-bottom:6px;font-weight:700}
+.stat-val{font-size:22px;font-weight:700;line-height:1;color:#fff}
+
+.segmented{display:flex;gap:8px;padding:6px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px}
+.seg-btn{
+  flex:1;padding:12px 14px;background:transparent;color:var(--text-mid);border:1px solid transparent;font-weight:700
+}
+.seg-btn.active{background:rgba(231,131,51,.12);color:#fff;border-color:rgba(231,131,51,.20)}
+
+.scan-box{background:rgba(255,255,255,.03);border:1px dashed rgba(231,131,51,.24);border-radius:18px;padding:14px}
+#reader{width:100%;border-radius:16px;overflow:hidden;background:#000;min-height:280px}
+.scan-note{font-size:12px;color:var(--text-soft);line-height:1.55}
+.scan-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+.client-card{
+  background:linear-gradient(180deg, rgba(231,131,51,.08), rgba(255,255,255,.03));
+  border:1px solid rgba(231,131,51,.18);border-radius:22px;padding:18px
+}
+.client-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.client-name{font-family:'Cormorant Garamond',serif;font-size:34px;line-height:.95;font-weight:500}
+.client-meta{font-size:13px;color:var(--text-soft);margin-top:8px;line-height:1.7}
+.client-points{font-size:42px;font-weight:700;line-height:1;color:#fff;text-align:right}
+.client-points-sub{font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:1.8px;margin-top:4px;text-align:right}
+.client-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tag{padding:7px 11px;border-radius:999px;font-size:12px;color:var(--text-mid);background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.tag.accent{color:var(--naranja);border-color:rgba(231,131,51,.22);background:rgba(231,131,51,.12)}
+
+.action-panels{display:grid;grid-template-columns:1fr;gap:14px}
+.panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:16px}
+.panel-title h3{font-size:17px;font-weight:700}
+.panel-desc{font-size:12px;color:var(--text-soft);line-height:1.55;margin-top:4px}
+.puntos-preview{padding:12px 14px;border-radius:14px;background:rgba(231,131,51,.10);border:1px solid rgba(231,131,51,.18);font-size:13px;color:#ffd9b7}
+.puntos-preview strong{color:#fff}
+
+.catalog-list,.hist-list{display:flex;flex-direction:column;gap:10px}
+.premio-item,.hist-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:14px}
+.premio-head,.hist-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.premio-name,.hist-title{font-size:14px;font-weight:700;color:#fff}
+.premio-desc,.hist-meta{font-size:12px;color:var(--text-soft);line-height:1.55;margin-top:4px}
+.premio-side{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.premio-pts{font-size:12px;color:var(--naranja);background:rgba(231,131,51,.12);border:1px solid rgba(231,131,51,.18);padding:6px 10px;border-radius:999px;font-weight:700;white-space:nowrap}
+.premio-btn{padding:10px 12px;font-weight:700;background:rgba(255,255,255,.06);color:#fff;border:1px solid var(--line)}
+.premio-btn:hover:not(:disabled){background:rgba(255,255,255,.1)}
+.premio-btn[disabled]{opacity:.45;cursor:not-allowed}
+.hist-points{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.hist-points.plus{color:#b8ecc2;background:rgba(138,209,155,.09);border-color:rgba(138,209,155,.16)}
+.hist-points.minus{color:#ffc6c6;background:rgba(255,141,141,.08);border-color:rgba(255,141,141,.15)}
+.hist-points.neutral{color:#ffe6a3;background:rgba(255,215,122,.08);border-color:rgba(255,215,122,.15)}
+
+.accordion{margin-top:16px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.03);overflow:hidden}
+.accordion-toggle{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;
+  background:transparent;border:none;color:#fff;text-align:left
+}
+.accordion-title{font-size:15px;font-weight:700}
+.accordion-sub{font-size:12px;color:var(--text-soft);margin-top:4px;line-height:1.5}
+.accordion-chevron{font-size:18px;color:var(--naranja);transition:transform .2s ease}
+.accordion.open .accordion-chevron{transform:rotate(180deg)}
+.accordion-body{display:none;padding:0 16px 16px}
+.accordion.open .accordion-body{display:block}
+.inline-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip-btn{padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--text-mid);font-size:12px}
+.chip-btn.active{color:#fff;background:rgba(231,131,51,.12);border-color:rgba(231,131,51,.18)}
+.footer-space{height:36px}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:18px;z-index:60
+}
+.modal-overlay.visible{display:flex}
+.modal{
+  width:min(100%,460px);background:#121212;border:1px solid rgba(231,131,51,.18);border-radius:24px;padding:22px;box-shadow:var(--shadow)
+}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:500;line-height:1;margin-bottom:8px}
+.modal p{font-size:13px;color:var(--text-soft);line-height:1.6}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.modal-mini{font-size:12px;color:var(--warn);margin-top:10px;line-height:1.55}
+
+.global-loader{
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,8,8,.62);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:120;padding:18px
+}
+.global-loader.visible{display:flex}
+.global-loader-card{
+  width:min(100%,260px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:18px 18px 16px;background:rgba(18,18,18,.94);border:1px solid rgba(231,131,51,.16);
+  border-radius:22px;box-shadow:var(--shadow);text-align:center
+}
+.global-loader-logo{width:54px;height:54px;object-fit:contain;display:block;filter:drop-shadow(0 8px 18px rgba(231,131,51,.14))}
+.global-loader-spinner{
+  width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.12);border-top-color:var(--naranja);
+  animation:spin .8s linear infinite
+}
+.global-loader-title{font-size:15px;font-weight:700;line-height:1.2}
+.global-loader-sub{font-size:12px;color:var(--text-soft);line-height:1.55}
+
+@media (max-width:980px){.grid-2{grid-template-columns:1fr}}
+@media (max-width:720px){
+  .topbar{padding:14px}
+  .topbar-title{font-size:19px}
+  .main{padding:16px 14px 80px}
+  .card{padding:16px}
+  .stats{grid-template-columns:1fr}
+  .client-top{flex-direction:column}
+  .client-points,.client-points-sub{text-align:left}
+  .topbar-right .session-pill{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="login-screen" class="login-wrap">
+    <div class="card login-card fade-in">
+      <img src="https://i.postimg.cc/dV2FdDn6/Diseno-sin-titulo-3-fotor-20250814173243.png" alt="Musuko" class="top-logo" onerror="this.style.display='none'">
+      <div class="section-label">Panel operativo</div>
+      <h1 class="card-title">Ingreso cajero</h1>
+      <p class="card-sub">Ingresa con tu PIN personal para consultar clientes, sumar puntos y realizar canjes. Todas las operaciones quedan registradas con tu nombre y local.</p>
+
+      <div class="field mt-18">
+        <label class="label" for="pin-login">PIN del cajero</label>
+        <input class="input" id="pin-login" inputmode="numeric" maxlength="8" placeholder="Ingresa tu PIN" autocomplete="off">
+        <div class="field-error" id="login-error"></div>
+      </div>
+
+      <div class="error-banner mt-14" id="login-banner-error"></div>
+      <div class="ok-banner mt-14" id="login-banner-ok"></div>
+
+      <button class="btn-primary mt-18" id="btn-login" style="width:100%" onclick="doLogin()">
+        <span id="btn-login-text">Entrar al panel</span>
+        <div class="loader-inline" id="btn-login-loader">
+          <div class="spinner"></div>
+          <span class="btn-state" id="btn-login-state">Validando PIN...</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div id="app-screen" class="hidden">
+    <div class="topbar">
+      <div class="topbar-left">
+        <img src="https://i.postimg.cc/dV2FdDn6/Diseno-sin-titulo-3-fotor-20250814173243.png" alt="Musuko" class="topbar-logo" onerror="this.style.display='none'">
+        <div class="topbar-txt">
+          <div class="topbar-kicker">Musuko Puntos</div>
+          <div class="topbar-title">Panel Cajero</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="session-pill">
+          <span class="session-dot"></span>
+          <span class="session-text" id="session-text">—</span>
+        </div>
+        <button class="btn-ghost" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <div class="main fade-in">
+      <div class="grid grid-2">
+        <div class="stack">
+          <div class="card">
+            <div class="section-label">Atención en caja</div>
+            <h2 class="card-title">Buscar cliente</h2>
+            <p class="card-sub">Identifica al cliente escaneando su QR o ingresando su RUT. El QR agiliza la atención y el RUT queda como respaldo si no tienes la cámara disponible.</p>
+
+            <div class="segmented mt-18">
+              <button class="seg-btn active" id="seg-rut" onclick="switchSearchMode('rut')">Buscar por RUT</button>
+              <button class="seg-btn" id="seg-qr" onclick="switchSearchMode('qr')">Escanear QR</button>
+            </div>
+
+            <div id="search-rut" class="mt-16">
+              <div class="row-wrap">
+                <div class="field" style="min-width:220px;flex:1.2">
+                  <label class="label" for="rut-search">RUT del cliente</label>
+                  <input class="input" id="rut-search" placeholder="12.345.678-9" autocomplete="off" inputmode="text" maxlength="12" oninput="formatearRut(this)">
+                </div>
+                <div class="field" style="min-width:160px;flex:.8">
+                  <label class="label">Acción</label>
+                  <button class="btn-primary" id="btn-search-rut" onclick="buscarClienteRut()">
+                    <span id="btn-search-rut-text">Buscar cliente</span>
+                    <div class="loader-inline" id="btn-search-rut-loader">
+                      <div class="spinner"></div>
+                      <span class="btn-state" id="btn-search-rut-state">Buscando...</span>
+                    </div>
+                  </button>
+                </div>
+                <div class="field" style="min-width:140px;flex:.7">
+                  <label class="label">Limpiar</label>
+                  <button class="btn-ghost" id="btn-clear-search" onclick="limpiarBusquedaCliente()">Limpiar</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="search-qr" class="mt-16 hidden">
+              <div class="scan-box">
+                <div id="reader"></div>
+                <p class="scan-note mt-12">Escanea el QR del cliente para cargar su cuenta más rápido. Si la cámara no está disponible o no tienes permisos, vuelve a la búsqueda por RUT.</p>
+                <div class="scan-actions mt-14">
+                  <button class="btn-soft" id="btn-start-scan" onclick="startScanner()">Iniciar cámara</button>
+                  <button class="btn-ghost hidden" id="btn-stop-scan" onclick="stopScanner()">Detener cámara</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="error-banner mt-16" id="search-error"></div>
+            <div class="ok-banner mt-16" id="search-ok"></div>
+            <div class="warn-banner mt-16" id="search-warn"></div>
+            <div class="inline-actions hidden" id="search-register-cta">
+              <button class="btn-soft" onclick="irARegistroNuevo()">Registrar como cliente nuevo</button>
+            </div>
+          </div>
+
+          <div class="card" id="client-section">
+            <div class="section-label">Cliente cargado</div>
+            <div id="client-empty" class="info-banner visible">Aún no hay un cliente seleccionado. Busca por RUT o escanea un QR para habilitar operaciones.</div>
+
+            <div id="client-loaded" class="hidden">
+              <div class="client-card">
+                <div class="client-top">
+                  <div>
+                    <div class="client-name" id="c-name">—</div>
+                    <div class="client-meta" id="c-meta">—</div>
+                  </div>
+                  <div>
+                    <div class="client-points" id="c-points">0</div>
+                    <div class="client-points-sub">puntos disponibles</div>
+                  </div>
+                </div>
+                <div class="client-tags" id="client-tags"></div>
+                <div class="inline-actions">
+                  <button class="btn-ghost" onclick="limpiarBusquedaCliente()">Limpiar cliente cargado</button>
+                  <button class="btn-soft" onclick="refrescarCliente()" id="btn-refresh-client">Actualizar ficha</button>
+                </div>
+              </div>
+
+              <div class="stats mt-14">
+                <div class="stat">
+                  <div class="stat-label">Miembro desde</div>
+                  <div class="stat-val" id="c-miembro">—</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Último canje</div>
+                  <div class="stat-val" id="c-canje">—</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Visitas</div>
+                  <div class="stat-val" id="c-visitas">—</div>
+                </div>
+              </div>
+
+              <div class="action-panels mt-16">
+                <div class="panel">
+                  <div class="panel-title">
+                    <div>
+                      <h3>Sumar puntos</h3>
+                      <p class="panel-desc">Registra el monto de la compra. El sistema calcula automáticamente los puntos según la tasa configurada del programa: el valor define cuántos pesos CLP equivalen a 1 punto.</p>
+                    </div>
+                  </div>
+
+                  <div class="row-wrap mt-14">
+                    <div class="field" style="min-width:220px;flex:1">
+                      <label class="label" for="monto-compra">Monto compra</label>
+                      <input class="input" id="monto-compra" inputmode="numeric" placeholder="Ej: 12000" oninput="actualizarPreviewPuntos()">
+                    </div>
+                    <div class="field" style="min-width:180px;flex:.85">
+                      <label class="label">Confirmar</label>
+                      <button class="btn-primary" id="btn-sumar" onclick="abrirConfirmacion('sumar')">
+                        <span id="btn-sumar-text">Sumar puntos</span>
+                        <div class="loader-inline" id="btn-sumar-loader">
+                          <div class="spinner"></div>
+                          <span class="btn-state" id="btn-sumar-state">Procesando...</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="puntos-preview mt-14" id="preview-puntos">Ingresa un monto para ver cuántos puntos se sumarán.</div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-title">
+                    <div>
+                      <h3>Canjear premio</h3>
+                      <p class="panel-desc">Solo se habilitan premios que el cliente puede pagar 100% con sus puntos disponibles. Al confirmar, el canje queda registrado automáticamente.</p>
+                    </div>
+                  </div>
+                  <div class="catalog-list mt-14" id="premios-canje"></div>
+                </div>
+              </div>
+
+              <div class="accordion mt-16" id="hist-accordion">
+                <button class="accordion-toggle" onclick="toggleHistorialAccordion()">
+                  <div>
+                    <div class="accordion-title">Historial del cliente</div>
+                    <div class="accordion-sub">Revisa los movimientos recientes del cliente sin salir de la caja. El detalle queda plegado para mantener la operación ordenada.</div>
+                  </div>
+                  <span class="accordion-chevron">⌄</span>
+                </button>
+                <div class="accordion-body">
+                  <div class="chips" id="hist-filter-wrap">
+                    <button class="chip-btn active" onclick="setHistFilter('all', this)">Todos</button>
+                    <button class="chip-btn" onclick="setHistFilter('acumulacion', this)">Acumulaciones</button>
+                    <button class="chip-btn" onclick="setHistFilter('canje', this)">Canjes</button>
+                    <button class="chip-btn" onclick="setHistFilter('otros', this)">Otros</button>
+                  </div>
+                  <div class="hist-list mt-14" id="historial-list">
+                    <div class="info-banner visible">Selecciona un cliente para ver su historial reciente.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="card">
+            <div class="accordion" id="registro-accordion">
+              <button class="accordion-toggle" type="button" onclick="toggleRegistroAccordion()">
+                <div>
+                  <div class="section-label">Registro nuevo</div>
+                  <div class="accordion-title">Registrar cliente</div>
+                  <div class="accordion-sub">Déjalo plegado para no ocupar espacio en caja. Ábrelo solo cuando el cliente aún no esté registrado o necesites crear una cuenta nueva.</div>
+                </div>
+                <span class="accordion-chevron">⌄</span>
+              </button>
+              <div class="accordion-body">
+                <div class="stack mt-16">
+                  <div class="row-wrap">
+                    <div class="field"><label class="label" for="reg-nombre">Nombre</label><input class="input" id="reg-nombre" oninput="soloLetras(this)" placeholder="Nombre"></div>
+                    <div class="field"><label class="label" for="reg-apellido">Apellido</label><input class="input" id="reg-apellido" oninput="soloLetras(this)" placeholder="Apellido"></div>
+                  </div>
+                  <div class="field"><label class="label" for="reg-rut">RUT</label><input class="input" id="reg-rut" oninput="formatearRut(this)" placeholder="12.345.678-9" inputmode="text" maxlength="12"></div>
+                  <div class="field"><label class="label" for="reg-correo">Correo</label><input class="input" id="reg-correo" type="email" placeholder="correo@ejemplo.com"></div>
+                  <div class="row-wrap">
+                    <div class="field"><label class="label" for="reg-telefono">Teléfono</label><input class="input" id="reg-telefono" inputmode="tel" placeholder="+56912345678" oninput="formatearTelefono(this)"></div>
+                    <div class="field"><label class="label" for="reg-nacimiento">Nacimiento</label><input class="input" id="reg-nacimiento" type="date"></div>
+                  </div>
+
+                  <div class="field">
+                    <label class="label">Local habitual</label>
+                    <div class="select-custom" id="reg-local-dd">
+                      <button type="button" class="select-btn" id="reg-local-btn" onclick="toggleLocalDropdown()">
+                        <span class="select-value placeholder" id="reg-local-value">Selecciona un local</span>
+                        <span class="select-chevron">▾</span>
+                      </button>
+                      <div class="select-menu" id="reg-local-menu"></div>
+                      <input type="hidden" id="reg-local">
+                    </div>
+                  </div>
+
+                  <div class="error-banner" id="register-error"></div>
+                  <div class="ok-banner" id="register-ok"></div>
+                  <div class="row-wrap">
+                    <button class="btn-soft" id="btn-register" onclick="registrarDesdeCajero()">
+                      <span id="btn-register-text">Registrar cliente</span>
+                      <div class="loader-inline" id="btn-register-loader">
+                        <div class="spinner"></div>
+                        <span class="btn-state" id="btn-register-state">Enviando...</span>
+                      </div>
+                    </button>
+                    <button class="btn-ghost" type="button" onclick="limpiarRegistro()">Limpiar formulario</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-banner visible mt-16" id="cashier-note">
+              Después de cada operación, la ficha del cliente se actualiza para reflejar el saldo y el historial más reciente.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-space"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-confirmacion" onclick="cerrarModalOverlay(event)">
+  <div class="modal">
+    <div class="section-label">Confirmación</div>
+    <h3 id="modal-title">Confirmar acción</h3>
+    <p id="modal-desc">Revisa el detalle antes de continuar.</p>
+    <p class="modal-mini">Esta acción afectará el saldo del cliente y quedará registrada en el historial del programa con tu nombre y local.</p>
+    <div class="field-error visible" id="modal-error" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" id="btn-modal-confirm" onclick="confirmarAccion()">
+        <span id="btn-modal-confirm-text">Confirmar</span>
+        <div class="loader-inline" id="btn-modal-confirm-loader">
+          <div class="spinner"></div>
+          <span class="btn-state" id="btn-modal-confirm-state">Procesando...</span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="global-loader" id="global-loader" aria-hidden="true">
+  <div class="global-loader-card">
+    <img src="https://i.postimg.cc/dV2FdDn6/Diseno-sin-titulo-3-fotor-20250814173243.png" alt="Musuko" class="global-loader-logo" onerror="this.style.display='none'">
+    <div class="global-loader-spinner"></div>
+    <div class="global-loader-title" id="global-loader-title">Cargando panel</div>
+    <div class="global-loader-sub" id="global-loader-sub">Espera un momento…</div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyO9ihZqACT13g8Sk999Ba-uv4elZMYJNtX2woCHlSD_yOddgS1qSVugJ-RqMaMDAY/exec';
+const SESSION_KEY = 'musuko_v4_cashier_session';
+const SESSION_VERSION = 1;
+const REQUEST_TIMEOUT_MS = 22000;
+
+let appConfig = { tasa_puntos: 1000, url_panel_registro: '' };
+let cashierSession = null;
+let customerCurrent = null;
+let catalogCurrent = [];
+let historyCurrent = [];
+let locationsCurrent = [];
+let historyFilter = 'all';
+let currentAction = null;
+let html5QrInstance = null;
+let scannerRunning = false;
+let lastScannedCode = '';
+let lastScanAt = 0;
+let operationInFlight = false;
+let globalLoaderTimer = null;
+let authPingTimer = null;
+
+function $(id){ return document.getElementById(id); }
+function nowMs(){ return Date.now(); }
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+function showGlobalLoader(title, subtitle, immediate){
+  const wrap = $('global-loader');
+  $('global-loader-title').textContent = title || 'Cargando';
+  $('global-loader-sub').textContent = subtitle || 'Espera un momento…';
+  const open = () => {
+    wrap.classList.add('visible');
+    wrap.setAttribute('aria-hidden', 'false');
+  };
+  if (globalLoaderTimer) clearTimeout(globalLoaderTimer);
+  globalLoaderTimer = null;
+  if (immediate) open();
+  else globalLoaderTimer = setTimeout(open, 120);
+}
+function hideGlobalLoader(){
+  if (globalLoaderTimer) clearTimeout(globalLoaderTimer);
+  globalLoaderTimer = null;
+  const wrap = $('global-loader');
+  wrap.classList.remove('visible');
+  wrap.setAttribute('aria-hidden', 'true');
+}
+
+function showBanner(id, msg){
+  const el = $(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function hideBanner(id){ const el = $(id); if (el) el.classList.remove('visible'); }
+function clearSearchBanners(){ ['search-error','search-ok','search-warn'].forEach(hideBanner); }
+function clearRegisterBanners(){ ['register-error','register-ok'].forEach(hideBanner); }
+function setFieldError(id, msg){
+  const el = $(id);
+  if (!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('visible', !!msg);
+}
+
+function setBusy(btnId, loaderId, textId, busy, states, intervalKey){
+  const btn = $(btnId), loader = $(loaderId), text = $(textId);
+  if (!btn || !loader || !text) return;
+  if (busy) {
+    btn.disabled = true;
+    text.style.display = 'none';
+    loader.classList.add('active');
+    const stateEl = loader.querySelector('.btn-state');
+    if (stateEl && Array.isArray(states) && states.length) {
+      let idx = 0;
+      stateEl.textContent = states[0];
+      window[intervalKey] = setInterval(() => {
+        idx = (idx + 1) % states.length;
+        stateEl.textContent = states[idx];
+      }, 900);
+    }
+  } else {
+    btn.disabled = false;
+    text.style.display = '';
+    loader.classList.remove('active');
+    if (intervalKey && window[intervalKey]) {
+      clearInterval(window[intervalKey]);
+      window[intervalKey] = null;
+    }
+  }
+}
+
+function setFieldsDisabled(ids, disabled){
+  (ids || []).forEach(id => { const el = $(id); if (el) el.disabled = !!disabled; });
+}
+
+async function apiPost(payload, timeoutMs = REQUEST_TIMEOUT_MS, options = {}){
+  const body = { ...(payload || {}) };
+  if (options.attachSession !== false && cashierSession && cashierSession.authToken && !body.authToken) {
+    body.authToken = cashierSession.authToken;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify(body),
+      signal: controller.signal,
+      cache:'no-store'
+    });
+    const raw = await res.text();
+    let json;
+    try { json = raw ? JSON.parse(raw) : null; }
+    catch(e){ throw new Error('INVALID_JSON_RESPONSE'); }
+
+    if (!json || typeof json !== 'object') throw new Error('EMPTY_RESPONSE');
+    if (json.ok === false) {
+      const code = json.error && json.error.code ? json.error.code : '';
+      const msg = json.error && json.error.message ? json.error.message : 'La operación no pudo completarse';
+      const err = new Error(msg);
+      err.code = code;
+      throw err;
+    }
+    return json;
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      const e = new Error('TIMEOUT');
+      e.code = 'TIMEOUT';
+      throw e;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function apiReadWithRetry(payload, timeoutMs = REQUEST_TIMEOUT_MS, options = {}){
+  try {
+    return await apiPost(payload, timeoutMs, options);
+  } catch (err) {
+    const msg = String(err && (err.code || err.message) || '');
+    if (/TIMEOUT|INVALID_JSON_RESPONSE|Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+      await sleep(450);
+      return await apiPost(payload, Math.max(timeoutMs, 28000), options);
+    }
+    throw err;
+  }
+}
+function dataOf(res){ return res && typeof res === 'object' ? (res.data || res) : {}; }
+
+function saveSession(session){
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+}
+function getSession(){
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function clearSession(){ try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+function sessionIsUsable(session){
+  return !!(session && session.authToken && Number(session.sessionExpiresAt || 0) > Date.now());
+}
+
+function startAuthPing(){
+  stopAuthPing();
+  authPingTimer = setInterval(async () => {
+    if (!cashierSession || !cashierSession.authToken) return;
+    try {
+      const res = await apiPost({ action:'v4.auth.session' }, 12000);
+      const d = dataOf(res);
+      if (d && d.sessionExpiresAt) {
+        cashierSession.sessionExpiresAt = new Date(d.sessionExpiresAt).getTime() || cashierSession.sessionExpiresAt;
+        saveSession(cashierSession);
+      }
+    } catch (e) {}
+  }, 4 * 60 * 1000);
+}
+function stopAuthPing(){
+  if (authPingTimer) {
+    clearInterval(authPingTimer);
+    authPingTimer = null;
+  }
+}
+
+function normalizeRut(v){
+  return String(v || '').replace(/\./g,'').replace(/\s+/g,'').toUpperCase();
+}
+function formatearRut(input){
+  let val = input.value.replace(/[^0-9kK]/g,'').toUpperCase().slice(0,9);
+  if (!val.length) { input.value = ''; return; }
+  if (val.length === 1) { input.value = val; return; }
+  const dv = val.slice(-1);
+  const cuerpo = val.slice(0,-1).slice(0,8);
+  let fmt = '', c = 0;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    if (c > 0 && c % 3 === 0) fmt = '.' + fmt;
+    fmt = cuerpo[i] + fmt; c++;
+  }
+  input.value = fmt + '-' + dv;
+}
+function validarRutChile(rut){
+  const clean = normalizeRut(rut).replace(/-/g,'');
+  if (clean.length < 8) return false;
+  const cuerpo = clean.slice(0,-1);
+  const dv = clean.slice(-1);
+  if (!/^\d+$/.test(cuerpo)) return false;
+  let suma = 0, mult = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i],10) * mult;
+    mult = mult < 7 ? mult + 1 : 2;
+  }
+  const dvCalc = 11 - (suma % 11);
+  const dvEsp = dvCalc === 11 ? '0' : dvCalc === 10 ? 'K' : String(dvCalc);
+  return dv.toUpperCase() === dvEsp;
+}
+function validarEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function soloLetras(input){ input.value = input.value.replace(/[^a-záéíóúüñA-ZÁÉÍÓÚÜÑ\s'-]/g,''); }
+function formatearTelefono(input){
+  let val = input.value.replace(/[^0-9+]/g,'');
+  if (val.length > 0 && !val.startsWith('+')) {
+    if (val.startsWith('56')) val = '+' + val;
+    else if (val.startsWith('9')) val = '+569' + val.slice(1);
+    else val = '+56' + val;
+  }
+  if (val.length > 12) val = val.slice(0,12);
+  input.value = val;
+}
+
+function parseFechaLocal(v){
+  if (v === null || v === undefined || v === '') return null;
+  if (v instanceof Date && !isNaN(v.getTime())) return v;
+  const raw = String(v).trim();
+  if (!raw) return null;
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const [d,m,y] = raw.split('/').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (iso) {
+    return new Date(
+      Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]),
+      Number(iso[4] || 0), Number(iso[5] || 0), Number(iso[6] || 0)
+    );
+  }
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+}
+function fmtFecha(v){
+  const fecha = parseFechaLocal(v);
+  if (!fecha) return v || '—';
+  return fecha.toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' });
+}
+function fmtHora(v){
+  const fecha = parseFechaLocal(v);
+  if (!fecha) {
+    const txt = String(v || '').trim();
+    return /^\d{1,2}:\d{2}$/.test(txt) ? txt.padStart(5,'0') : '';
+  }
+  return fecha.toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit', hour12:false });
+}
+function fmtFechaHora(v){
+  const fecha = fmtFecha(v);
+  const hora = fmtHora(v);
+  return [fecha, hora].filter(Boolean).join(' · ');
+}
+function fmtMonto(v){
+  const n = Number(v || 0);
+  if (!Number.isFinite(n)) return '—';
+  return '$' + n.toLocaleString('es-CL');
+}
+function escapeHtml(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escapeAttr(v){
+  return String(v == null ? '' : v).replace(/['"<>]/g,'');
+}
+
+function mergeConfig(cfg){
+  if (cfg && typeof cfg === 'object') {
+    appConfig = { ...appConfig, ...cfg };
+  }
+}
+
+function normalizeCashier(c){
+  if (!c || typeof c !== 'object') return null;
+  return {
+    id: c.id || '',
+    nombre: c.nombre || '',
+    localId: c.localId || c.local_id || '',
+    localNombre: c.localNombre || c.local || '',
+    activo: c.activo
+  };
+}
+function normalizeReward(item){
+  if (!item || typeof item !== 'object') return null;
+  return {
+    id: item.id || '',
+    nombre: item.nombre || '',
+    descripcion: item.descripcion || '',
+    puntosReq: Number(item.puntosRequeridos != null ? item.puntosRequeridos : (item.puntos_requeridos != null ? item.puntos_requeridos : 0)),
+    activo: item.activo,
+    orden: Number(item.orden != null ? item.orden : 999)
+  };
+}
+function locationNameById(id){
+  const loc = locationsCurrent.find(x => String(x.id) === String(id));
+  return loc ? loc.nombre : '';
+}
+function normalizeCustomer(c){
+  if (!c || typeof c !== 'object') return null;
+  return {
+    id: c.id || c.customerId || '',
+    rut: c.rut || '',
+    nombre: c.nombres || c.nombre || '',
+    apellido: c.apellidos || c.apellido || '',
+    correo: c.correo || '',
+    telefono: c.telefono || '',
+    nacimiento: c.nacimiento || '',
+    localHabitualId: c.localHabitualId || c.local_habitual_id || '',
+    puntos: Number(c.puntosSaldo != null ? c.puntosSaldo : (c.puntos_saldo != null ? c.puntos_saldo : 0)),
+    totalVisitas: Number(c.totalVisitas != null ? c.totalVisitas : (c.total_visitas != null ? c.total_visitas : 0)),
+    activo: c.activo,
+    miembroDesde: c.fechaRegistro || c.fecha_registro || c.fechaAlta || c.createdAt || c.created_at || '',
+    ultimoCanje: c.ultimoCanjeAt || c.ultimo_canje_at || c.ultimoCanje || '',
+    ultimaAcumulacion: c.ultimaAcumulacionAt || c.ultima_acumulacion_at || '',
+    nombreCompleto: c.nombreCompleto || '',
+    raw: c
+  };
+}
+function normalizeHistory(items){
+  return (Array.isArray(items) ? items : []).map(item => ({
+    id: item.id || '',
+    operationId: item.operationId || item.operation_id || '',
+    tipo: String(item.tipo || '').toLowerCase(),
+    monto: Number(item.monto || 0),
+    puntos: Number(item.puntos || 0),
+    premioId: item.premioId || item.premio_id || '',
+    descripcion: item.descripcion || '',
+    localId: item.localId || item.local_id || '',
+    createdAt: item.createdAt || item.created_at || ''
+  }));
+}
+
+function updateSessionHeader(){
+  if (!$('session-text')) return;
+  if (!cashierSession) {
+    $('session-text').textContent = 'Sesión cerrada';
+    return;
+  }
+  $('session-text').textContent = `${cashierSession.nombre || 'Cajero'} · ${cashierSession.localNombre || 'Sin local'}`;
+}
+
+function toggleRegistroAccordion(force){
+  const el = $('registro-accordion');
+  if (!el) return;
+  if (typeof force === 'boolean') el.classList.toggle('open', force);
+  else el.classList.toggle('open');
+}
+function toggleHistorialAccordion(force){
+  const el = $('hist-accordion');
+  if (!el) return;
+  if (typeof force === 'boolean') el.classList.toggle('open', force);
+  else el.classList.toggle('open');
+}
+function switchSearchMode(mode){
+  const isRut = mode === 'rut';
+  $('seg-rut').classList.toggle('active', isRut);
+  $('seg-qr').classList.toggle('active', !isRut);
+  $('search-rut').classList.toggle('hidden', !isRut);
+  $('search-qr').classList.toggle('hidden', isRut);
+  if (isRut) stopScanner();
+}
+
+function renderLocalOptions(){
+  const menu = $('reg-local-menu');
+  const hidden = $('reg-local');
+  const value = $('reg-local-value');
+  const selected = String(hidden.value || '');
+
+  const items = locationsCurrent.filter(x => x && x.activo !== false);
+  menu.innerHTML = items.map(loc => {
+    const active = String(loc.id) === selected;
+    return `<button type="button" class="select-option ${active ? 'active' : ''}" onclick="selectLocalOption('${escapeAttr(loc.id)}')">${escapeHtml(loc.nombre)}</button>`;
+  }).join('');
+
+  const chosen = items.find(loc => String(loc.id) === selected);
+  value.textContent = chosen ? chosen.nombre : 'Selecciona un local';
+  value.classList.toggle('placeholder', !chosen);
+}
+function toggleLocalDropdown(force){
+  const btn = $('reg-local-btn');
+  const menu = $('reg-local-menu');
+  const open = typeof force === 'boolean' ? force : !menu.classList.contains('open');
+  menu.classList.toggle('open', open);
+  btn.classList.toggle('open', open);
+}
+function selectLocalOption(id){
+  $('reg-local').value = id || '';
+  renderLocalOptions();
+  toggleLocalDropdown(false);
+}
+document.addEventListener('click', e => {
+  const dd = $('reg-local-dd');
+  if (!dd || dd.contains(e.target)) return;
+  toggleLocalDropdown(false);
+});
+
+function applyCashierBootstrap(data){
+  mergeConfig(data.configPublica || data.config || {});
+  locationsCurrent = Array.isArray(data.locales) ? data.locales.slice() : locationsCurrent;
+  catalogCurrent = (Array.isArray(data.catalogo) ? data.catalogo : []).map(normalizeReward).filter(Boolean);
+  renderLocalOptions();
+}
+
+function buildRutFromCompact(compact){
+  const clean = String(compact || '').replace(/[^0-9kK]/g,'').toUpperCase();
+  if (clean.length < 8) return '';
+  const dv = clean.slice(-1);
+  const body = clean.slice(0, -1);
+  if (!body) return '';
+  let fmt = '', c = 0;
+  for (let i = body.length - 1; i >= 0; i--) {
+    if (c > 0 && c % 3 === 0) fmt = '.' + fmt;
+    fmt = body[i] + fmt; c++;
+  }
+  return `${fmt}-${dv}`;
+}
+
+function parseScannedClientReference(decodedText){
+  const raw = String(decodedText || '').trim();
+  if (!raw) return null;
+
+  try {
+    const obj = JSON.parse(raw);
+    const id = String(obj.id || obj.customerId || obj.idCliente || obj.clientId || '').trim();
+    const rut = String(obj.rut || obj.RUT || obj.customerRut || '').trim();
+    if (id) return { id: id.toUpperCase(), label: id.toUpperCase() };
+    if (rut) return { rut: normalizeRut(rut), label: rut };
+  } catch (e) {}
+
+  try {
+    const url = new URL(raw);
+    const id = String(url.searchParams.get('id') || url.searchParams.get('customerId') || url.searchParams.get('idCliente') || '').trim();
+    const rut = String(url.searchParams.get('rut') || '').trim();
+    if (id) return { id: id.toUpperCase(), label: id.toUpperCase() };
+    if (rut) return { rut: normalizeRut(rut), label: rut };
+    const lastSegment = decodeURIComponent((url.pathname || '').split('/').filter(Boolean).pop() || '');
+    if (/^(CUS|MSK)-/i.test(lastSegment)) return { id: lastSegment.toUpperCase(), label: lastSegment.toUpperCase() };
+  } catch (e) {}
+
+  const idMatch = raw.match(/\b(?:CUS|MSK)-[A-Z0-9-]+\b/i);
+  if (idMatch) return { id: idMatch[0].toUpperCase(), label: idMatch[0].toUpperCase() };
+
+  const rutPretty = raw.match(/\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/);
+  if (rutPretty && validarRutChile(rutPretty[0])) return { rut: normalizeRut(rutPretty[0]), label: rutPretty[0] };
+
+  const compact = raw.replace(/[^0-9kK]/g,'').toUpperCase();
+  if (compact.length >= 8 && compact.length <= 9) {
+    const formatted = buildRutFromCompact(compact);
+    if (formatted && validarRutChile(formatted)) return { rut: normalizeRut(formatted), label: formatted };
+  }
+  return null;
+}
+
+let lookupCache = new Map();
+let activeLookupSeq = 0;
+
+function clientCacheKey(query){
+  if (!query) return '';
+  if (query.customerId) return 'id:' + String(query.customerId).trim().toUpperCase();
+  if (query.rut) return 'rut:' + normalizeRut(query.rut);
+  return '';
+}
+function getCachedClient(query){
+  const key = clientCacheKey(query);
+  if (!key) return null;
+  const entry = lookupCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > 20000) {
+    lookupCache.delete(key);
+    return null;
+  }
+  return JSON.parse(JSON.stringify(entry.data));
+}
+function cacheClientPayload(payload){
+  if (!payload || !payload.customer) return;
+  const keys = [];
+  if (payload.customer.id) keys.push('id:' + String(payload.customer.id).trim().toUpperCase());
+  if (payload.customer.rut) keys.push('rut:' + normalizeRut(payload.customer.rut));
+  keys.forEach(key => lookupCache.set(key, { ts: Date.now(), data: payload }));
+}
+function invalidateCurrentClientCache(){
+  if (!customerCurrent) return;
+  if (customerCurrent.id) lookupCache.delete('id:' + String(customerCurrent.id).trim().toUpperCase());
+  if (customerCurrent.rut) lookupCache.delete('rut:' + normalizeRut(customerCurrent.rut));
+}
+
+async function loadPublicBootstrap(){
+  try {
+    const res = await apiPost({ action:'v4.public.bootstrap' }, 14000, { attachSession:false });
+    const data = dataOf(res);
+    mergeConfig(data.configPublica || {});
+    locationsCurrent = Array.isArray(data.locales) ? data.locales.slice() : [];
+    renderLocalOptions();
+  } catch (e) {}
+}
+
+function enterApp(){
+  $('login-screen').classList.add('hidden');
+  $('app-screen').classList.remove('hidden');
+  updateSessionHeader();
+  startAuthPing();
+}
+function showLogin(message){
+  hideGlobalLoader();
+  stopAuthPing();
+  stopScanner();
+  $('app-screen').classList.add('hidden');
+  $('login-screen').classList.remove('hidden');
+  if (message) showBanner('login-banner-error', message);
+}
+
+async function restoreSession(){
+  const session = getSession();
+  if (!session || !sessionIsUsable(session)) return false;
+
+  cashierSession = session;
+  updateSessionHeader();
+  enterApp();
+  showGlobalLoader('Restaurando sesión', 'Volviendo a abrir la caja…', false);
+  try {
+    const res = await apiReadWithRetry({ action:'v4.cashier.bootstrap' }, 18000);
+    const data = dataOf(res);
+    const cashier = normalizeCashier(data.cashier || cashierSession);
+    cashierSession = { ...cashierSession, ...cashier, sessionExpiresAt: session.sessionExpiresAt };
+    saveSession(cashierSession);
+    applyCashierBootstrap(data);
+    hideGlobalLoader();
+    return true;
+  } catch (e) {
+    clearSession();
+    cashierSession = null;
+    showLogin('No se pudo restaurar la sesión. Ingresa nuevamente.');
+    return false;
+  }
+}
+
+async function doLogin(){
+  hideBanner('login-banner-error');
+  hideBanner('login-banner-ok');
+  setFieldError('login-error', '');
+
+  const pin = $('pin-login').value.trim();
+  if (!/^\d{4,8}$/.test(pin)) {
+    setFieldError('login-error', 'Ingresa un PIN válido de 4 a 8 dígitos');
+    return;
+  }
+
+  clearSession();
+  cashierSession = null;
+  setBusy('btn-login','btn-login-loader','btn-login-text', true, ['Validando PIN...','Abriendo sesión...'], '__loginInt');
+  showGlobalLoader('Validando PIN', 'Abriendo sesión de cajero…', false);
+
+  try {
+    const res = await apiReadWithRetry({ action:'v4.auth.cashier.login', pin }, 26000, { attachSession:false });
+    const data = dataOf(res);
+
+    const cashier = normalizeCashier(data.cashier);
+    cashierSession = {
+      version: SESSION_VERSION,
+      authToken: data.authToken,
+      sessionExpiresAt: new Date(data.sessionExpiresAt).getTime() || 0,
+      ...cashier
+    };
+    saveSession(cashierSession);
+    enterApp();
+
+    applyCashierBootstrap({
+      cashier,
+      configPublica: (data.bootstrap && (data.bootstrap.config || data.bootstrap.configPublica)) || {},
+      catalogo: data.bootstrap && data.bootstrap.catalogo ? data.bootstrap.catalogo : [],
+      locales: locationsCurrent
+    });
+
+    try {
+      const bootRes = await apiReadWithRetry({ action:'v4.cashier.bootstrap' }, 18000);
+      const boot = dataOf(bootRes);
+      applyCashierBootstrap(boot);
+      const cashierFresh = normalizeCashier(boot.cashier || cashierSession);
+      cashierSession = { ...cashierSession, ...cashierFresh };
+      saveSession(cashierSession);
+      updateSessionHeader();
+    } catch (bootErr) {}
+
+    hideGlobalLoader();
+    showBanner('login-banner-ok', `Bienvenido/a ${cashierSession.nombre}. Sesión iniciada en ${cashierSession.localNombre}.`);
+  } catch (err) {
+    const code = err.code || '';
+    const msg = code === 'AUTH_INVALID_CREDENTIALS'
+      ? 'PIN incorrecto o cajero inactivo.'
+      : code === 'TIMEOUT'
+        ? 'La caja tardó demasiado en responder. Intenta nuevamente.'
+        : (err.message || 'Error de conexión. Intenta nuevamente.');
+    showBanner('login-banner-error', msg);
+    showLogin();
+  } finally {
+    hideGlobalLoader();
+    setBusy('btn-login','btn-login-loader','btn-login-text', false, null, '__loginInt');
+  }
+}
+
+async function logout(){
+  const authToken = cashierSession && cashierSession.authToken;
+  clearSession();
+  stopAuthPing();
+  cashierSession = null;
+  customerCurrent = null;
+  catalogCurrent = [];
+  historyCurrent = [];
+  currentAction = null;
+  operationInFlight = false;
+  lookupCache = new Map();
+  hideGlobalLoader();
+  stopScanner();
+  $('pin-login').value = '';
+  $('client-empty').classList.add('visible');
+  $('client-loaded').classList.add('hidden');
+  clearSearchBanners();
+  clearRegisterBanners();
+  showLogin();
+  try {
+    if (authToken) await apiPost({ action:'v4.auth.logout', authToken }, 12000, { attachSession:false });
+  } catch (e) {}
+}
+
+function normalizeLookupResponse(data){
+  const customer = normalizeCustomer(data.customer || data.customerResumen || {});
+  const history = normalizeHistory(data.historialReciente || data.historial || []);
+  const catalog = (Array.isArray(data.catalogo) ? data.catalogo : catalogCurrent).map(normalizeReward).filter(Boolean);
+  return { customer, history, catalog };
+}
+
+async function lookupClient(query, options = {}){
+  const opts = {
+    source: 'rut',
+    useCache: true,
+    showLoader: true,
+    showSuccessBanner: true,
+    allowRegisterSuggestion: false,
+    successMessage: '',
+    ...options
+  };
+
+  const cacheHit = opts.useCache ? getCachedClient(query) : null;
+  if (cacheHit) {
+    hydrateCustomer(cacheHit);
+    if (opts.showSuccessBanner) showBanner('search-ok', opts.successMessage || `Cliente cargado: ${cacheHit.customer.nombre} ${cacheHit.customer.apellido}.`);
+    return cacheHit;
+  }
+
+  const reqSeq = ++activeLookupSeq;
+  if (opts.source === 'rut') {
+    setBusy('btn-search-rut','btn-search-rut-loader','btn-search-rut-text', true, ['Buscando cliente...','Cargando historial...'], '__searchRutInt');
+  }
+  if (opts.showLoader) showGlobalLoader('Buscando cliente', 'Consultando saldo, historial y catálogo…', false);
+
+  try {
+    let res;
+    if (query.customerId) {
+      res = await apiReadWithRetry({ action:'v4.customers.get', customerId: query.customerId }, 18000);
+    } else {
+      res = await apiReadWithRetry({ action:'v4.customers.byRut', rut: normalizeRut(query.rut) }, 18000);
+    }
+    if (reqSeq !== activeLookupSeq) return null;
+
+    const data = dataOf(res);
+    const normalized = normalizeLookupResponse(data);
+    if (!normalized.customer) throw new Error('Cliente no encontrado');
+
+    cacheClientPayload(normalized);
+    hydrateCustomer(normalized);
+    if (opts.showSuccessBanner) {
+      showBanner('search-ok', opts.successMessage || `Cliente cargado: ${normalized.customer.nombre} ${normalized.customer.apellido}.`);
+    }
+    return normalized;
+  } catch (err) {
+    clearCustomer();
+    const code = err.code || '';
+    if (opts.allowRegisterSuggestion && query.rut && code === 'CUSTOMER_NOT_FOUND') {
+      $('reg-rut').value = query.rut;
+      toggleRegistroAccordion(true);
+      $('search-register-cta').classList.remove('hidden');
+      showBanner('search-warn', 'Cliente no encontrado. Puedes registrarlo como cliente nuevo.');
+    } else {
+      const msg = code === 'TIMEOUT'
+        ? 'La consulta tardó demasiado. Intenta nuevamente.'
+        : (err.message || 'No se pudo consultar el cliente. Revisa tu conexión.');
+      showBanner('search-error', msg);
+    }
+    return null;
+  } finally {
+    if (opts.showLoader) hideGlobalLoader();
+    if (opts.source === 'rut') setBusy('btn-search-rut','btn-search-rut-loader','btn-search-rut-text', false, null, '__searchRutInt');
+  }
+}
+
+async function buscarClienteRut(){
+  clearSearchBanners();
+  const rut = $('rut-search').value.trim();
+  if (!rut || rut.length < 9 || !validarRutChile(rut)) {
+    showBanner('search-error', 'Ingresa un RUT válido para buscar al cliente.');
+    return;
+  }
+  await lookupClient({ rut }, { source:'rut', allowRegisterSuggestion:true, showLoader:true, showSuccessBanner:true });
+}
+
+async function buscarClientePorReferencia(ref){
+  if (!ref || (!ref.id && !ref.rut)) {
+    showBanner('search-error', 'El QR no contiene un identificador válido.');
+    return;
+  }
+  await lookupClient(ref.id ? { customerId: ref.id } : { rut: ref.rut }, {
+    source:'qr',
+    useCache:true,
+    showLoader:true,
+    showSuccessBanner:true,
+    allowRegisterSuggestion:false,
+    successMessage:'Cliente cargado desde QR correctamente.'
+  });
+}
+
+function hydrateCustomer(payload){
+  customerCurrent = { ...(payload.customer || {}) };
+  historyCurrent = Array.isArray(payload.history) ? payload.history.slice() : [];
+  if (Array.isArray(payload.catalog) && payload.catalog.length) catalogCurrent = payload.catalog.slice();
+
+  $('client-empty').classList.remove('visible');
+  $('client-loaded').classList.remove('hidden');
+
+  const fullName = customerCurrent.nombreCompleto || [customerCurrent.nombre || '', customerCurrent.apellido || ''].join(' ').trim();
+  const localName = locationNameById(customerCurrent.localHabitualId) || customerCurrent.local || 'Sin local';
+  $('c-name').textContent = fullName || 'Cliente';
+  $('c-meta').textContent = `${customerCurrent.rut || '—'} · Local habitual: ${localName} · ID: ${customerCurrent.id || '—'}`;
+  $('c-points').textContent = Number(customerCurrent.puntos || 0).toLocaleString('es-CL');
+  $('c-miembro').textContent = fmtFecha(customerCurrent.miembroDesde);
+  $('c-canje').textContent = customerCurrent.ultimoCanje ? fmtFecha(customerCurrent.ultimoCanje) : 'Sin canjes';
+  $('c-visitas').textContent = Number(customerCurrent.totalVisitas || 0).toLocaleString('es-CL');
+
+  $('client-tags').innerHTML = [
+    `<span class="tag accent">${escapeHtml(customerCurrent.id || '—')}</span>`,
+    `<span class="tag">${escapeHtml(localName)}</span>`,
+    `<span class="tag">${escapeHtml(customerCurrent.rut || '—')}</span>`
+  ].join('');
+
+  $('search-register-cta').classList.add('hidden');
+  actualizarPreviewPuntos();
+  renderRewardsRedeem();
+  renderHistory();
+  toggleHistorialAccordion(false);
+}
+
+function clearCustomer(){
+  customerCurrent = null;
+  historyCurrent = [];
+  $('client-empty').classList.add('visible');
+  $('client-loaded').classList.add('hidden');
+  $('historial-list').innerHTML = '<div class="info-banner visible">Selecciona un cliente para ver su historial reciente.</div>';
+  $('search-register-cta').classList.add('hidden');
+  toggleHistorialAccordion(false);
+}
+function limpiarBusquedaCliente(){
+  clearSearchBanners();
+  $('rut-search').value = '';
+  $('monto-compra').value = '';
+  actualizarPreviewPuntos();
+  clearCustomer();
+}
+async function refrescarCliente(){
+  if (!customerCurrent || !customerCurrent.id) return;
+  await lookupClient({ customerId: customerCurrent.id }, {
+    source:'refresh',
+    useCache:false,
+    showLoader:true,
+    showSuccessBanner:false,
+    allowRegisterSuggestion:false
+  });
+}
+function irARegistroNuevo(){
+  const rut = $('rut-search').value.trim();
+  if (rut) $('reg-rut').value = rut;
+  toggleRegistroAccordion(true);
+  $('reg-nombre').focus();
+}
+
+function actualizarPreviewPuntos(){
+  const monto = parseInt(String($('monto-compra').value || '').replace(/\D/g,''), 10);
+  const tasa = parseInt(appConfig.tasa_puntos || 1000, 10) || 1000;
+  const out = $('preview-puntos');
+  if (!monto || monto <= 0) {
+    out.textContent = 'Ingresa un monto para ver cuántos puntos se sumarán según la tasa vigente del programa.';
+    return;
+  }
+  const puntos = Math.floor(monto / tasa);
+  if (puntos <= 0) {
+    out.innerHTML = `Con <strong>${fmtMonto(monto)}</strong> todavía no se alcanza el monto mínimo requerido para sumar al menos 1 punto según la tasa vigente.`;
+    return;
+  }
+  out.innerHTML = `Compra <strong>${fmtMonto(monto)}</strong> → se sumarán <strong>+${puntos} puntos</strong> al saldo del cliente según la tasa configurada.`;
+}
+
+function renderRewardsRedeem(){
+  const container = $('premios-canje');
+  if (!customerCurrent) {
+    container.innerHTML = '<div class="info-banner visible">Selecciona un cliente para revisar premios disponibles.</div>';
+    return;
+  }
+  if (!Array.isArray(catalogCurrent) || !catalogCurrent.length) {
+    container.innerHTML = '<div class="warn-banner visible">No hay premios activos en el catálogo.</div>';
+    return;
+  }
+  const points = Number(customerCurrent.puntos || 0);
+  const ordered = [...catalogCurrent].sort((a,b) => Number(a.puntosReq || 0) - Number(b.puntosReq || 0));
+  container.innerHTML = ordered.map(p => {
+    const req = Number(p.puntosReq || 0);
+    const available = points >= req;
+    const faltan = Math.max(0, req - points);
+    return `<div class="premio-item">
+      <div class="premio-head">
+        <div>
+          <div class="premio-name">${escapeHtml(p.nombre || 'Premio')}</div>
+          <div class="premio-desc">${escapeHtml(p.descripcion || '')}${available ? ' · listo para canje' : ` · faltan ${faltan} pts`}</div>
+        </div>
+        <div class="premio-side">
+          <span class="premio-pts">${req.toLocaleString('es-CL')} pts</span>
+          <button class="premio-btn" ${available ? '' : 'disabled'} onclick="abrirConfirmacion('canjear','${escapeAttr(p.id)}','${escapeAttr(p.nombre || '')}',${req})">Canjear</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory(){
+  const container = $('historial-list');
+  if (!customerCurrent) {
+    container.innerHTML = '<div class="info-banner visible">Selecciona un cliente para ver su historial reciente.</div>';
+    return;
+  }
+  let items = historyCurrent.slice();
+  if (historyFilter === 'acumulacion') items = items.filter(i => i.tipo === 'acumulacion');
+  if (historyFilter === 'canje') items = items.filter(i => i.tipo === 'canje');
+  if (historyFilter === 'otros') items = items.filter(i => !['acumulacion','canje'].includes(i.tipo));
+
+  if (!items.length) {
+    container.innerHTML = '<div class="warn-banner visible">No hay movimientos para el filtro seleccionado.</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(i => {
+    const tipo = String(i.tipo || '').toLowerCase();
+    const badgeClass = tipo === 'acumulacion' ? 'plus' : tipo === 'canje' ? 'minus' : 'neutral';
+    const titulo = tipo === 'acumulacion' ? 'Compra registrada' : tipo === 'canje' ? 'Canje realizado' : 'Movimiento';
+    const detalle = [
+      fmtFechaHora(i.createdAt),
+      i.localId ? `Local ${escapeHtml(locationNameById(i.localId) || i.localId)}` : '',
+      i.monto ? fmtMonto(i.monto) : '',
+      i.descripcion ? escapeHtml(i.descripcion) : ''
+    ].filter(Boolean).join(' · ');
+    const puntosTxt = Number(i.puntos || 0) > 0 ? `+${i.puntos}` : String(i.puntos || 0);
+    return `<div class="hist-item">
+      <div class="hist-head">
+        <div>
+          <div class="hist-title">${titulo}</div>
+          <div class="hist-meta">${detalle}</div>
+        </div>
+        <div class="hist-points ${badgeClass}">${puntosTxt} pts</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setHistFilter(type, btn){
+  historyFilter = type;
+  document.querySelectorAll('#hist-filter-wrap .chip-btn').forEach(el => el.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderHistory();
+}
+
+function abrirConfirmacion(tipo, rewardId = '', rewardName = '', rewardPts = 0){
+  clearSearchBanners();
+  if (!customerCurrent) {
+    showBanner('search-warn', 'Primero debes cargar un cliente para operar.');
+    return;
+  }
+  if (tipo === 'sumar') {
+    const monto = parseInt(String($('monto-compra').value || '').replace(/\D/g,''), 10);
+    const tasa = parseInt(appConfig.tasa_puntos || 1000, 10) || 1000;
+    const puntos = Math.floor((monto || 0) / tasa);
+    if (!monto || monto <= 0 || puntos <= 0) {
+      showBanner('search-warn', 'Ingresa un monto válido que genere al menos 1 punto.');
+      return;
+    }
+    currentAction = { tipo:'sumar', monto, puntos };
+    $('modal-title').textContent = 'Confirmar suma de puntos';
+    $('modal-desc').textContent = `Se registrará una compra de ${fmtMonto(monto)} y se sumarán +${puntos} puntos a ${customerCurrent.nombre} ${customerCurrent.apellido}.`;
+  } else {
+    currentAction = { tipo:'canjear', rewardId, rewardName, rewardPts };
+    $('modal-title').textContent = 'Confirmar canje';
+    $('modal-desc').textContent = `Se canjeará “${rewardName}” por ${Number(rewardPts).toLocaleString('es-CL')} puntos del saldo de ${customerCurrent.nombre} ${customerCurrent.apellido}.`;
+  }
+  setFieldError('modal-error', '');
+  $('modal-confirmacion').classList.add('visible');
+}
+function cerrarModal(){
+  $('modal-confirmacion').classList.remove('visible');
+  currentAction = null;
+}
+function cerrarModalOverlay(e){
+  if (e.target === $('modal-confirmacion')) cerrarModal();
+}
+
+function mergeOperationSummary(summary){
+  if (!customerCurrent || !summary) return;
+  if (summary.customerId) customerCurrent.id = summary.customerId;
+  if (summary.rut) customerCurrent.rut = summary.rut;
+  if (summary.nombreCompleto && (!customerCurrent.nombre || !customerCurrent.apellido)) {
+    const parts = String(summary.nombreCompleto).trim().split(/\s+/);
+    customerCurrent.nombre = parts.shift() || customerCurrent.nombre || '';
+    customerCurrent.apellido = parts.join(' ') || customerCurrent.apellido || '';
+  }
+  if (summary.puntosSaldo != null) customerCurrent.puntos = Number(summary.puntosSaldo || 0);
+  if (summary.totalVisitas != null) customerCurrent.totalVisitas = Number(summary.totalVisitas || 0);
+  if (summary.ultimoCanjeAt) customerCurrent.ultimoCanje = summary.ultimoCanjeAt;
+  if (summary.ultimaAcumulacionAt) customerCurrent.ultimaAcumulacion = summary.ultimaAcumulacionAt;
+  if (summary.localHabitualId) customerCurrent.localHabitualId = summary.localHabitualId;
+}
+
+async function confirmarAccion(){
+  if (!currentAction || !customerCurrent || !cashierSession || operationInFlight) return;
+  operationInFlight = true;
+  setFieldError('modal-error', '');
+  const opId = `${currentAction.tipo === 'sumar' ? 'EARN' : 'REDEEM'}-${customerCurrent.id || 'NA'}-${Date.now()}`;
+
+  setBusy('btn-modal-confirm','btn-modal-confirm-loader','btn-modal-confirm-text', true, ['Validando operación...','Registrando...'], '__modalInt');
+  showGlobalLoader(currentAction.tipo === 'sumar' ? 'Sumando puntos' : 'Procesando canje', 'Registrando la operación en Musuko Puntos…', false);
+
+  try {
+    let res;
+    if (currentAction.tipo === 'sumar') {
+      res = await apiReadWithRetry({
+        action:'v4.transactions.earn',
+        customerId: customerCurrent.id,
+        monto: currentAction.monto,
+        operationId: opId,
+        descripcion: 'Compra registrada desde panel cajero V4'
+      }, 22000);
+    } else {
+      res = await apiReadWithRetry({
+        action:'v4.transactions.redeem',
+        customerId: customerCurrent.id,
+        rewardId: currentAction.rewardId,
+        operationId: opId
+      }, 22000);
+    }
+
+    const data = dataOf(res);
+    mergeOperationSummary(data.customerResumen || {});
+    historyCurrent = normalizeHistory(data.historialReciente || []);
+    invalidateCurrentClientCache();
+    cacheClientPayload({ customer: customerCurrent, history: historyCurrent, catalog: catalogCurrent });
+
+    cerrarModal();
+    $('monto-compra').value = '';
+    actualizarPreviewPuntos();
+    hydrateCustomer({ customer: customerCurrent, history: historyCurrent, catalog: catalogCurrent });
+    showBanner('search-ok', currentAction.tipo === 'sumar' ? 'Puntos sumados correctamente.' : 'Canje realizado correctamente.');
+
+    setTimeout(() => { refrescarCliente().catch(() => {}); }, 150);
+  } catch (err) {
+    const msg = (err.code === 'TIMEOUT') ? 'La operación tardó demasiado. Verifica la transacción e intenta nuevamente.' : (err.message || 'No se pudo completar la operación.');
+    setFieldError('modal-error', msg);
+  } finally {
+    operationInFlight = false;
+    hideGlobalLoader();
+    setBusy('btn-modal-confirm','btn-modal-confirm-loader','btn-modal-confirm-text', false, null, '__modalInt');
+  }
+}
+
+async function registrarDesdeCajero(){
+  clearRegisterBanners();
+  const payload = {
+    nombres: $('reg-nombre').value.trim(),
+    apellidos: $('reg-apellido').value.trim(),
+    rut: $('reg-rut').value.trim(),
+    correo: $('reg-correo').value.trim(),
+    telefono: $('reg-telefono').value.trim(),
+    nacimiento: $('reg-nacimiento').value,
+    localHabitualId: $('reg-local').value,
+    aceptaTerminos: true,
+    aceptaTerminosVersion: 'v4-cashier-inline'
+  };
+
+  if (!payload.nombres || !payload.apellidos || !payload.rut || !payload.correo || !payload.nacimiento || !payload.localHabitualId) {
+    showBanner('register-error', 'Completa todos los campos obligatorios antes de registrar.');
+    return;
+  }
+  if (!validarRutChile(payload.rut)) {
+    showBanner('register-error', 'Ingresa un RUT válido.');
+    return;
+  }
+  if (!validarEmail(payload.correo)) {
+    showBanner('register-error', 'Ingresa un correo válido.');
+    return;
+  }
+  if (payload.telefono && !/^\+569\d{8}$/.test(payload.telefono)) {
+    showBanner('register-error', 'El teléfono debe tener formato +569XXXXXXXX.');
+    return;
+  }
+  const nacimiento = new Date(payload.nacimiento + 'T00:00:00');
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  if (isNaN(nacimiento.getTime()) || nacimiento > hoy) {
+    showBanner('register-error', 'La fecha de nacimiento no puede ser futura.');
+    return;
+  }
+
+  setBusy('btn-register','btn-register-loader','btn-register-text', true, ['Validando datos...','Registrando cliente...'], '__registerInt');
+  setFieldsDisabled(['reg-nombre','reg-apellido','reg-rut','reg-correo','reg-telefono','reg-nacimiento'], true);
+  $('reg-local-btn').disabled = true;
+  showGlobalLoader('Registrando cliente', 'Guardando datos y preparando la ficha…', false);
+
+  try {
+    const res = await apiReadWithRetry({ action:'v4.customers.create', ...payload }, 22000, { attachSession:false });
+    const data = dataOf(res);
+    showBanner('register-ok', `Cliente registrado correctamente. ID asignado: ${data.customerId || data.id || '—'}.`);
+    limpiarRegistro();
+    $('rut-search').value = payload.rut;
+    await lookupClient({ rut: payload.rut }, {
+      source:'rut',
+      useCache:false,
+      showLoader:true,
+      showSuccessBanner:true,
+      allowRegisterSuggestion:false,
+      successMessage:'Cliente registrado y cargado correctamente.'
+    });
+  } catch (err) {
+    showBanner('register-error', err.code === 'TIMEOUT' ? 'El registro tardó demasiado. Intenta nuevamente.' : (err.message || 'Error de conexión al registrar cliente.'));
+  } finally {
+    hideGlobalLoader();
+    setBusy('btn-register','btn-register-loader','btn-register-text', false, null, '__registerInt');
+    setFieldsDisabled(['reg-nombre','reg-apellido','reg-rut','reg-correo','reg-telefono','reg-nacimiento'], false);
+    $('reg-local-btn').disabled = false;
+  }
+}
+
+function limpiarRegistro(){
+  ['reg-nombre','reg-apellido','reg-rut','reg-correo','reg-telefono','reg-nacimiento'].forEach(id => { if ($(id)) $(id).value = ''; });
+  $('reg-local').value = '';
+  renderLocalOptions();
+}
+
+async function startScanner(){
+  clearSearchBanners();
+  if (scannerRunning) return;
+  if (typeof Html5Qrcode === 'undefined') {
+    showBanner('search-error', 'La librería de escaneo no cargó. Usa la búsqueda por RUT.');
+    return;
+  }
+  showGlobalLoader('Abriendo cámara', 'Preparando lectura de QR…', false);
+  try {
+    html5QrInstance = new Html5Qrcode('reader');
+    scannerRunning = true;
+    $('btn-start-scan').classList.add('hidden');
+    $('btn-stop-scan').classList.remove('hidden');
+    await html5QrInstance.start(
+      { facingMode:'environment' },
+      { fps:12, qrbox:{ width:240, height:240 }, aspectRatio:1 },
+      async decodedText => {
+        const now = nowMs();
+        if (!decodedText) return;
+        if (decodedText === lastScannedCode && now - lastScanAt < 1800) return;
+        lastScannedCode = decodedText;
+        lastScanAt = now;
+        const ref = parseScannedClientReference(decodedText);
+        if (!ref) {
+          showBanner('search-warn', 'QR leído, pero no reconocimos el formato. Usa el QR generado por Musuko o busca por RUT.');
+          return;
+        }
+        await stopScanner();
+        showBanner('search-ok', `QR leído: ${ref.label}. Buscando cliente...`);
+        await buscarClientePorReferencia(ref);
+      },
+      () => {}
+    );
+  } catch (e) {
+    scannerRunning = false;
+    $('btn-start-scan').classList.remove('hidden');
+    $('btn-stop-scan').classList.add('hidden');
+    showBanner('search-error', 'No se pudo iniciar la cámara. Revisa permisos o usa búsqueda por RUT.');
+  } finally {
+    hideGlobalLoader();
+  }
+}
+async function stopScanner(){
+  if (html5QrInstance && scannerRunning) {
+    try { await html5QrInstance.stop(); } catch (e) {}
+    try { await html5QrInstance.clear(); } catch (e) {}
+  }
+  html5QrInstance = null;
+  scannerRunning = false;
+  lastScannedCode = '';
+  $('btn-start-scan').classList.remove('hidden');
+  $('btn-stop-scan').classList.add('hidden');
+  $('reader').innerHTML = '';
+}
+
+function resetUiState(){
+  hideGlobalLoader();
+  setBusy('btn-login','btn-login-loader','btn-login-text', false, null, '__loginInt');
+  setBusy('btn-search-rut','btn-search-rut-loader','btn-search-rut-text', false, null, '__searchRutInt');
+  setBusy('btn-register','btn-register-loader','btn-register-text', false, null, '__registerInt');
+  setBusy('btn-modal-confirm','btn-modal-confirm-loader','btn-modal-confirm-text', false, null, '__modalInt');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('modal-confirmacion').classList.contains('visible')) cerrarModal();
+});
+$('pin-login').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('rut-search').addEventListener('keydown', e => { if (e.key === 'Enter') buscarClienteRut(); });
+window.addEventListener('beforeunload', stopScanner);
+window.addEventListener('load', async () => {
+  resetUiState();
+  await loadPublicBootstrap();
+  await restoreSession();
+});
+</script>
+</body>
+</html>
