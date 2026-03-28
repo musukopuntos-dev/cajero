@@ -821,6 +821,15 @@ function escapeHtml(v){
 function escapeAttr(v){
   return String(v == null ? '' : v).replace(/['"<>]/g,'');
 }
+function toIntSafe(v, fallback = 0){
+  if (v === null || v === undefined || v === '') return fallback;
+  if (typeof v === 'number' && Number.isFinite(v)) return Math.trunc(v);
+  const raw = String(v).trim();
+  if (!raw) return fallback;
+  const normalized = raw.replace(/\./g,'').replace(/,/g,'.').replace(/[^0-9.-]/g,'');
+  const n = Number(normalized);
+  return Number.isFinite(n) ? Math.trunc(n) : fallback;
+}
 
 function mergeConfig(cfg){
   if (cfg && typeof cfg === 'object') {
@@ -844,9 +853,14 @@ function normalizeReward(item){
     id: item.id || '',
     nombre: item.nombre || '',
     descripcion: item.descripcion || '',
-    puntosReq: Number(item.puntosRequeridos != null ? item.puntosRequeridos : (item.puntos_requeridos != null ? item.puntos_requeridos : 0)),
+    puntosReq: toIntSafe(
+      item.puntosRequeridos != null ? item.puntosRequeridos :
+      (item.puntos_requeridos != null ? item.puntos_requeridos :
+      (item.puntosReq != null ? item.puntosReq :
+      (item.requiredPoints != null ? item.requiredPoints : 0)))
+    ),
     activo: item.activo,
-    orden: Number(item.orden != null ? item.orden : 999)
+    orden: toIntSafe(item.orden != null ? item.orden : 999, 999)
   };
 }
 function locationNameById(id){
@@ -864,8 +878,15 @@ function normalizeCustomer(c){
     telefono: c.telefono || '',
     nacimiento: c.nacimiento || '',
     localHabitualId: c.localHabitualId || c.local_habitual_id || '',
-    puntos: Number(c.puntosSaldo != null ? c.puntosSaldo : (c.puntos_saldo != null ? c.puntos_saldo : 0)),
-    totalVisitas: Number(c.totalVisitas != null ? c.totalVisitas : (c.total_visitas != null ? c.total_visitas : 0)),
+    puntos: toIntSafe(
+      c.puntosSaldo != null ? c.puntosSaldo :
+      (c.puntos_saldo != null ? c.puntos_saldo :
+      (c.puntos != null ? c.puntos : 0))
+    ),
+    totalVisitas: toIntSafe(
+      c.totalVisitas != null ? c.totalVisitas :
+      (c.total_visitas != null ? c.total_visitas : 0)
+    ),
     activo: c.activo,
     miembroDesde: c.fechaRegistro || c.fecha_registro || c.fechaAlta || c.createdAt || c.created_at || '',
     ultimoCanje: c.ultimoCanjeAt || c.ultimo_canje_at || c.ultimoCanje || '',
@@ -1365,10 +1386,10 @@ function renderRewardsRedeem(){
     container.innerHTML = '<div class="warn-banner visible">No hay premios activos en el catálogo.</div>';
     return;
   }
-  const points = Number(customerCurrent.puntos || 0);
+  const points = toIntSafe(customerCurrent.puntos || 0);
   const ordered = [...catalogCurrent].sort((a,b) => Number(a.puntosReq || 0) - Number(b.puntosReq || 0));
   container.innerHTML = ordered.map(p => {
-    const req = Number(p.puntosReq || 0);
+    const req = toIntSafe(p.puntosReq || 0);
     const available = points >= req;
     const faltan = Math.max(0, req - points);
     return `<div class="premio-item">
@@ -1679,3 +1700,4 @@ window.addEventListener('load', async () => {
 </script>
 </body>
 </html>
+
